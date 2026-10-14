@@ -28,7 +28,16 @@ from algorithms.columnar import columnar_encrypt, columnar_decrypt, get_column_o
 from utils.file_handler import read_text_file, write_text_file
 from utils.validator import validate_cipher_input
 from utils.benchmark import benchmark_algorithms, BENCHMARK_EDUCATIONAL_NOTE
-from gui import launch_gui, ALGORITHM_HELP
+try:
+    from gui import launch_gui, ALGORITHM_HELP
+except ImportError as _gui_err:
+    # GUI requires tkinter system libs (libtk) which may be missing on headless Linux.
+    # CLI still works without it.
+    launch_gui = None  # type: ignore
+    ALGORITHM_HELP = {}
+    _GUI_IMPORT_ERROR = str(_gui_err)
+else:
+    _GUI_IMPORT_ERROR = ""
 
 def print_header(title: str = "CLASSICAL CRYPTOGRAPHY TOOLKIT"):
     print("=" * 60)
@@ -62,7 +71,9 @@ def display_main_menu():
 def handle_caesar():
     print_header("1. CAESAR CIPHER")
     text = input("Enter Plaintext: ").strip()
-    shift_str = input("Enter Shift Key (integer, e.g. 5): ").strip()
+    shift_str = input("Enter Shift Key (integer, e.g. 5) [default 5]: ").strip()
+    if shift_str == "":
+        shift_str = "5"
     
     try:
         shift = int(shift_str)
@@ -365,6 +376,11 @@ def handle_file_decrypt():
 
 def handle_help():
     print_header("12. HELP & DOCUMENTATION")
+    if not ALGORITHM_HELP:
+        print("\n[NOTE] Detailed algorithm help lives in gui.py, which needs")
+        print(f"Tkinter system libs. Import failed: {_GUI_IMPORT_ERROR}")
+        print("See user_manual.md, README.md for documentation.")
+        return
     print("\nAvailable Algorithm Topics:\n")
     topics = list(ALGORITHM_HELP.keys())
     for idx, t in enumerate(topics, 1):
@@ -397,6 +413,11 @@ def handle_help():
 def main():
     # Check command line flags
     if len(sys.argv) > 1 and sys.argv[1].lower() in ["--gui", "-g"]:
+        if launch_gui is None:
+            print("GUI unavailable: Tkinter system libs missing.")
+            print(f"Import error: {_GUI_IMPORT_ERROR}")
+            print("Run CLI menu instead (no --gui flag). See user_manual.md.")
+            return
         print("Launching Graphical User Interface (GUI)...")
         launch_gui()
         return
@@ -434,8 +455,12 @@ def main():
             print("Exiting Classical Cryptography Toolkit. Goodbye!")
             sys.exit(0)
         elif choice == '14':
-            print("Launching Tkinter Graphical User Interface (GUI)...")
-            launch_gui()
+            if launch_gui is None:
+                print("GUI unavailable: Tkinter system libs missing.")
+                print(f"Import error: {_GUI_IMPORT_ERROR}")
+            else:
+                print("Launching Tkinter Graphical User Interface (GUI)...")
+                launch_gui()
         else:
             print("[ERROR] Invalid choice. Please enter a number between 1 and 14.")
             

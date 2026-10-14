@@ -18,9 +18,10 @@ def validate_cipher_input(cipher_name: str, text: str, key: Any) -> None:
 
     if name == "Caesar Cipher":
         try:
-            int(key)
-        except (ValueError, TypeError):
-            raise ValueError("Shift key must be an integer.")
+            int(str(key).strip())
+        except (ValueError, TypeError, AttributeError):
+            got = repr(key) if isinstance(key, str) and key.strip() else repr(key)
+            raise ValueError(f"Shift key must be an integer (e.g. 5). Got {got}.")
 
     elif name == "Monoalphabetic Cipher":
         key_str = str(key).strip()
@@ -52,11 +53,11 @@ def validate_cipher_input(cipher_name: str, text: str, key: Any) -> None:
 
     elif name == "Rail Fence Cipher":
         try:
-            rails = int(key)
+            rails = int(str(key).strip())
             if rails < 2:
-                raise ValueError("Number of rails must be an integer >= 2.")
-        except (ValueError, TypeError):
-            raise ValueError("Number of rails must be an integer >= 2.")
+                raise ValueError("Number of rails must be an integer >= 2 (e.g. 3).")
+        except (ValueError, TypeError, AttributeError):
+            raise ValueError(f"Number of rails must be an integer >= 2 (e.g. 3). Got {repr(key)}.")
 
     elif name == "Columnar Transposition Cipher":
         clean_key = [c.upper() for c in str(key) if c.isalpha()]
